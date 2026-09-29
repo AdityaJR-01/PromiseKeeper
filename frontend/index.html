@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromiseKeeper AI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0a0514', cardbg: '#130d26',
+                        neonpurple: '#a855f7', neongreen: '#4ade80'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0a0514; color: #f8fafc; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh;}
+        main { flex: 1; }
+        .glass-panel {
+            background: rgba(19, 13, 38, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(168, 85, 247, 0.2); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #c084fc, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .nav-link { cursor: pointer; transition: color 0.2s; }
+        .nav-link:hover { color: #ffffff; }
+        .action-btn { transition: all 0.2s; border: 1px solid transparent; }
+        .btn-accept { color: #22c55e; } .btn-accept:hover { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); }
+        .btn-reject { color: #ef4444; } .btn-reject:hover { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+        .btn-fixed { color: #3b82f6; } .btn-fixed:hover { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); }
+        /* Custom Scrollbar for code blocks */
+        pre::-webkit-scrollbar { height: 6px; }
+        pre::-webkit-scrollbar-track { background: transparent; }
+        pre::-webkit-scrollbar-thumb { background: #3b226b; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-6">
+
+    <header class="flex justify-between items-center mb-12">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-neonpurple flex items-center justify-center font-bold text-white">PK</div>
+            <h1 class="text-xl font-bold tracking-wide">PromiseKeeper <span class="text-neonpurple">AI</span></h1>
+        </div>
+        <nav class="flex gap-6 text-sm font-medium">
+            <a onclick="showTab('dashboard')" id="nav-dashboard" class="nav-link text-white">Dashboard</a>
+            <a onclick="showTab('history')" id="nav-history" class="nav-link text-gray-400">History</a>
+            <a onclick="showTab('api')" id="nav-api" class="nav-link text-gray-400">API</a>
+        </nav>
+        <button class="bg-neonpurple hover:bg-purple-600 text-white px-5 py-2 rounded-full text-sm font-bold transition">Sign Up</button>
+    </header>
+
+    <main>
+    <!-- TAB: DASHBOARD -->
+    <div id="section-dashboard">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="lg:col-span-4 glass-panel rounded-xl p-6 h-fit">
+                <h3 class="font-bold text-lg mb-4 flex items-center gap-2 text-gray-200">
+                    <span class="text-neonpurple">&lt; &gt;</span> Simulation Editor
+                </h3>
+                <form id="simForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 uppercase tracking-wide mb-1">Account ID</label>
+                        <select id="account" class="w-full bg-black/50 border border-gray-700 rounded-lg p-2.5 text-sm text-gray-200 focus:outline-none focus:border-neonpurple">
+                            <option value="acct-gold-01">acct-gold-01</option>
+                            <option value="acct-silver-02">acct-silver-02</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 uppercase tracking-wide mb-1">Value ($)</label>
+                            <input type="number" id="orderValue" value="6000" class="w-full bg-black/50 border border-gray-700 rounded-lg p-2.5 text-sm text-gray-200 focus:outline-none focus:border-neonpurple">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 uppercase tracking-wide mb-1">Region</label>
+                            <select id="region" class="w-full bg-black/50 border border-gray-700 rounded-lg p-2.5 text-sm text-gray-200 focus:outline-none focus:border-neonpurple">
+                                <option value="EU">EU</option>
+                                <option value="US">US</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 uppercase tracking-wide mb-1">Service Tier</label>
+                        <select id="tier" class="w-full bg-black/50 border border-gray-700 rounded-lg p-2.5 text-sm text-gray-200 focus:outline-none focus:border-neonpurple">
+                            <option value="gold">Gold</option>
+                            <option value="silver">Silver</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-neonpurple hover:bg-purple-600 text-white font-bold py-3 rounded-lg mt-4 transition flex justify-center items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        Analyze Risk
+                    </button>
+                </form>
+            </div>
+
+            <div class="lg:col-span-8">
+                <div id="idle" class="glass-panel rounded-xl p-12 text-center text-gray-600 font-mono text-sm h-full flex items-center justify-center">
+                    Waiting for simulation input...
+                </div>
+                
+                <div id="loading" class="hidden glass-panel rounded-xl p-12 text-center text-gray-500 h-full flex flex-col items-center justify-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-neonpurple mb-4"></div>
+                    Compiling Reality Engine & Recalling Memories...
+                </div>
+
+                <div id="results" class="hidden space-y-6">
+                    <div class="glass-panel rounded-xl p-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold mb-1 flex items-center gap-2">
+                                <span id="status-icon"></span> <span id="status-text"></span>
+                            </h3>
+                            <p class="text-gray-400 text-sm">Predicted Timeline: <span id="timeline" class="text-white font-bold"></span></p>
+                        </div>
+                        <span class="bg-black/50 text-xs px-3 py-1 rounded-full border border-gray-700 text-gray-400">Diagnostic Output</span>
+                    </div>
+
+                    <div id="detailed-analysis" class="hidden space-y-6">
+                        <h4 class="text-gray-300 font-bold mb-1 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                            Detailed Analysis
+                        </h4>
+                        
+                        <!-- NEW FINDING CARD (Cyan Variant) -->
+                        <div class="bg-[#0f0714] border border-red-800/80 rounded-xl p-5 shadow-[0_0_15px_rgba(220,38,38,0.1)]">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center gap-2 text-red-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    <h4 class="text-lg font-bold text-gray-200 tracking-wide">Static SLA Constraint Vulnerability</h4>
+                                </div>
+                                <span class="bg-red-950/60 text-red-400 border border-red-800/80 px-2 py-0.5 rounded text-xs font-bold tracking-wider">CRITICAL</span>
+                            </div>
+                            
+                            <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                                The timeline query is constructed using a hardcoded SLA heuristic, directly interpolating the 'Gold Tier' status into the delivery promise. This method is highly susceptible to unmodeled logistical delays. If the regional node encounters constraints, a strict 3.0 day promise could lead to unauthorized SLA breaches and financial penalties.
+                            </p>
+
+                            <div class="bg-[#05111a] border border-[#0c4a6e] rounded-lg p-4 flex gap-5 items-center">
+                                <div class="flex flex-col items-center justify-center shrink-0 w-24">
+                                    <div class="flex items-center gap-1 text-[#22d3ee]">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-center leading-tight">NEW FINDING</span>
+                                    </div>
+                                    <span class="text-[#0284c7] text-[9px] font-bold mt-1 text-center">(Static Path Analysis)</span>
+                                </div>
+                                <p class="text-gray-300 text-sm leading-relaxed border-l border-[#0c4a6e] pl-4">
+                                    The graph engine has identified that relying solely on tier-based heuristics bypasses regional congestion modeling. It is recommended to invoke Hindsight evaluation overrides.
+                                </p>
+                            </div>
+
+                            <div class="flex gap-4 mt-5">
+                                <button class="action-btn btn-accept flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Accept</button>
+                                <button class="action-btn btn-reject flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Reject</button>
+                                <button class="action-btn btn-fixed flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Mark Fixed</button>
+                            </div>
+                        </div>
+
+                        <!-- LEARNED CONTEXT CARD (Blue Variant) -->
+                        <div class="bg-[#0f0714] border border-orange-800/80 rounded-xl p-5 shadow-[0_0_15px_rgba(234,88,12,0.1)]">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center gap-2 text-orange-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    <h4 class="text-lg font-bold text-gray-200 tracking-wide">Historical Customs Deviation</h4>
+                                </div>
+                                <span class="bg-orange-950/60 text-orange-400 border border-orange-800/80 px-2 py-0.5 rounded text-xs font-bold tracking-wider">WARNING</span>
+                            </div>
+                            
+                            <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                                The Reality Compiler generated a base timeline of 3.0 days. However, Hindsight memory indicates that high-value EU orders require additional clearance. To guarantee SLA compliance, a dynamic buffer is required.
+                            </p>
+
+                            <div class="bg-[#0b141e] border border-[#1e3a5f] rounded-lg p-4 flex gap-5 items-center">
+                                <div class="flex flex-col items-center justify-center shrink-0 w-24">
+                                    <span class="text-[#38bdf8] text-[10px] font-extrabold uppercase tracking-widest text-center leading-tight">Learned Context</span>
+                                    <span class="text-[#0284c7] text-[9px] font-bold mt-1 text-center">(Hindsight Memory)</span>
+                                </div>
+                                <p class="text-gray-300 text-sm leading-relaxed border-l border-[#1e3a5f] pl-4">
+                                    Historical trace <code class="text-purple-400 bg-purple-900/30 px-1 rounded">TRC-8891-EU</code> indicates that orders > $5,000 to this destination experienced a +1.5 day deviation due to customs holds not accounted for in standard SLAs.
+                                </p>
+                            </div>
+
+                            <div class="flex gap-4 mt-5">
+                                <button class="action-btn btn-accept flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Accept Buffer</button>
+                                <button class="action-btn btn-reject flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Reject</button>
+                                <button class="action-btn btn-fixed flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Mark Resolved</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: HISTORY -->
+    <div id="section-history" class="hidden">
+        <div class="mb-8">
+            <h2 class="text-3xl font-extrabold mb-2">Reconciliation <span class="text-neonpurple">History</span></h2>
+            <p class="text-gray-400">Live traces comparing Reality Compiler predictions against observed Hindsight fulfillment traces.</p>
+        </div>
+        <div class="glass-panel rounded-xl overflow-hidden border border-gray-800">
+            <table class="w-full text-left text-sm text-gray-300">
+                <thead class="bg-black/60 text-xs uppercase text-gray-400 border-b border-gray-800">
+                    <tr>
+                        <th class="px-6 py-4 font-bold tracking-wider">Trace ID</th>
+                        <th class="px-6 py-4 font-bold tracking-wider">Account</th>
+                        <th class="px-6 py-4 font-bold tracking-wider">Predicted</th>
+                        <th class="px-6 py-4 font-bold tracking-wider">Observed</th>
+                        <th class="px-6 py-4 font-bold tracking-wider">Delta / New Rules</th>
+                        <th class="px-6 py-4 font-bold tracking-wider">Classification</th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody" class="divide-y divide-gray-800">
+                    <tr><td colspan="6" class="px-6 py-6 text-center text-gray-500">Loading history...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB: API -->
+    <div id="section-api" class="hidden">
+        <div class="mb-8">
+            <h2 class="text-3xl font-extrabold mb-2">Developer <span class="text-neonpurple">API</span></h2>
+            <p class="text-gray-400">Integrate PromiseKeeper's Reality Engine & Hindsight Memory directly into your pipeline.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- /simulate Endpoint -->
+            <div class="glass-panel rounded-xl p-8">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-green-600/20 text-green-400 border border-green-600/50 px-3 py-1 rounded text-sm font-bold tracking-wider">POST</span>
+                    <code class="text-lg text-gray-200">/simulate</code>
+                </div>
+                <p class="text-gray-400 text-sm mb-6 leading-relaxed">Evaluates an order's fulfillment risk by querying Hindsight for semantic context, hydrating the context into strict Pydantic rules, and calculating paths via Dijkstra.</p>
+                
+                <h4 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Request Body (JSON)</h4>
+                <div class="bg-black/60 border border-gray-800 rounded-lg p-4 font-mono text-sm text-blue-300 mb-6 overflow-x-auto">
+<pre>{
+  "domain": "fulfillment",
+  "scope": {
+    "tenant": "pk-demo",
+    "domain": "fulfillment",
+    "account": "acct-gold-01"
+  },
+  "state": {
+    "order_value": 6000,
+    "destination_region": "EU",
+    "tier": "gold"
+  }
+}</pre>
+                </div>
+
+                <h4 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Response (200 OK)</h4>
+                <div class="bg-black/60 border border-gray-800 rounded-lg p-4 font-mono text-sm text-green-300 overflow-x-auto">
+<pre>{
+  "decision": "review",
+  "total_value": 3.5,
+  "reasons": [
+    "Analyzed via compiled evidence bounds"
+  ],
+  "memories_used": 2
+}</pre>
+                </div>
+            </div>
+
+            <!-- /history Endpoint -->
+            <div class="glass-panel rounded-xl p-8 h-fit">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-blue-600/20 text-blue-400 border border-blue-600/50 px-3 py-1 rounded text-sm font-bold tracking-wider">GET</span>
+                    <code class="text-lg text-gray-200">/history</code>
+                </div>
+                <p class="text-gray-400 text-sm mb-6 leading-relaxed">Returns a historical audit trail of trace reconciliations, showing where predicted execution deviated from real-world outcomes and what coefficients were modified.</p>
+                
+                <h4 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Response (200 OK)</h4>
+                <div class="bg-black/60 border border-gray-800 rounded-lg p-4 font-mono text-sm text-green-300 overflow-x-auto">
+<pre>[
+  {
+    "trace_id": "TRC-8891-EU",
+    "classification": "unmodeled",
+    "residual_delta": 2.0,
+    "unmodeled_states": [
+      "customs_hold"
+    ],
+    "proposed_corrections": [
+      {
+        "kind": "new_transition",
+        "value": 2.0
+      }
+    ]
+  }
+]</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    </main>
+
+    <footer class="mt-16 pt-8 border-t border-gray-800 flex justify-between items-center text-xs text-gray-500 font-medium">
+        <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded bg-neonpurple flex items-center justify-center text-[10px] text-white">PK</div>
+            <span>PromiseKeeper AI © 2026</span>
+        </div>
+        <div class="flex gap-6">
+            <a href="#" class="hover:text-gray-300 transition">Privacy Policy</a>
+            <a href="#" class="hover:text-gray-300 transition">Terms of Service</a>
+            <a href="#" class="hover:text-gray-300 transition">GitHub Repo</a>
+            <a href="#" class="hover:text-gray-300 transition">Discord Community</a>
+        </div>
+        <div class="flex items-center gap-3">
+            <svg class="w-4 h-4 hover:text-gray-300 cursor-pointer transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            <svg class="w-4 h-4 hover:text-gray-300 cursor-pointer transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+        </div>
+    </footer>
+
+    <script>
+        function showTab(tabName) {
+            ['dashboard', 'history', 'api'].forEach(t => {
+                document.getElementById('section-' + t).classList.add('hidden');
+                document.getElementById('nav-' + t).classList.remove('text-white');
+                document.getElementById('nav-' + t).classList.add('text-gray-400');
+            });
+            document.getElementById('section-' + tabName).classList.remove('hidden');
+            document.getElementById('nav-' + tabName).classList.add('text-white');
+            if (tabName === 'history') loadHistory();
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/history');
+                const data = await response.json();
+                const tbody = document.getElementById('history-tbody');
+                tbody.innerHTML = '';
+                data.forEach(trace => {
+                    const badgeClass = trace.classification === 'confirmed' ? 'bg-[#064e3b]/80 text-[#34d399] border-[#047857]/50' :
+                                       trace.classification === 'deviated' ? 'bg-[#7f1d1d]/80 text-[#f87171] border-[#b91c1c]/50' :
+                                       'bg-[#78350f]/80 text-[#fbbf24] border-[#b45309]/50';
+                    const details = trace.unmodeled_states.length > 0 ? `Added state: <span class="text-gray-300">${trace.unmodeled_states[0]}</span>` : trace.proposed_corrections.length > 0 ? `Coefficient Mod: <span class="text-gray-300">${trace.proposed_corrections[0].value}</span>` : 'Matched Model';
+                    tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-gray-800 last:border-0"><td class="px-6 py-4 font-mono text-purple-400">${trace.trace_id}</td><td class="px-6 py-4 text-gray-200">${trace.account}</td><td class="px-6 py-4">${trace.predicted_total} days</td><td class="px-6 py-4">${trace.observed_total} days</td><td class="px-6 py-4 text-xs font-mono text-gray-400">${details}</td><td class="px-6 py-4"><span class="px-3 py-1 rounded text-[10px] font-extrabold tracking-wider border ${badgeClass}">${trace.classification.toUpperCase()}</span></td></tr>`;
+                });
+            } catch (err) { }
+        }
+
+        document.getElementById('simForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            document.getElementById('idle').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            const payload = {
+                domain: "fulfillment",
+                scope: { tenant: "pk-demo", domain: "fulfillment", account: document.getElementById('account').value },
+                state: { order_value: parseInt(document.getElementById('orderValue').value), destination_region: document.getElementById('region').value, tier: document.getElementById('tier').value }
+            };
+
+            try {
+                const response = await fetch('/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await response.json();
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+
+                const statusIcon = document.getElementById('status-icon');
+                const statusText = document.getElementById('status-text');
+                const detailedAnalysis = document.getElementById('detailed-analysis');
+
+                if (data.decision === "allow") {
+                    statusIcon.innerHTML = "<svg class='w-6 h-6 text-neongreen' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7'></path></svg>";
+                    statusText.innerText = "Promise Feasible";
+                    statusText.className = "text-neongreen";
+                    detailedAnalysis.classList.add('hidden');
+                } else {
+                    statusIcon.innerHTML = "<svg class='w-6 h-6 text-red-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'></path></svg>";
+                    statusText.innerText = "Review Required (SLA Breach Risk)";
+                    statusText.className = "text-red-500";
+                    detailedAnalysis.classList.remove('hidden');
+                }
+
+                document.getElementById('timeline').innerText = `${data.total_value} days`;
+
+            } catch (err) {
+                alert("Error connecting to backend.");
+            }
+        });
+    </script>
+</body>
+</html>
