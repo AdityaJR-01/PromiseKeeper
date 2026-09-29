@@ -1,0 +1,42 @@
+domain: fulfillment
+version: "0.1"
+description: Delivery-promise risk for B2B order fulfillment.
+scope:
+  hard_keys: [tenant, account]
+  relevance_keys: [warehouse]
+process:
+  initial_state: payment_authorized
+  terminal_state: delivered
+metric:
+  name: total_days
+  unit: business days
+  projection: business_days
+  projection_start_field: placed_at
+compilation:
+  min_support: 1
+  deviation_tolerance: 0.3
+guard_hypotheses:
+  - id: always
+    specificity: 0
+    expression: "true"
+  - id: not_eu
+    specificity: 1
+    expression: "destination_region != 'EU'"
+  - id: is_eu
+    specificity: 1
+    expression: "destination_region == 'EU'"
+invariants:
+  - id: GOLD_TIER_SLA
+    description: Gold accounts are guaranteed 3 business days.
+    applies_when: "tier == 'gold'"
+    expression: "total_days <= 3"
+    severity: blocking
+interventions:
+  - id: risk_pre_clearance
+    lead_time_days: 0.5
+preferences:
+  confidence_buffer_threshold: 0.6
+  conservative_buffer: 1
+recall:
+  limit: 25
+  query_template: Fulfillment timeline and stage durations for account {account}, order value {order_value} USD, destination region {destination_region}, service tier {tier}.

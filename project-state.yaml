@@ -1,0 +1,22 @@
+workflow_version: "2.1"
+current_phase: "P05"
+status: "in_progress"
+project:
+  name: "PromiseKeeper"
+  repository_url: "https://github.com/AdityaJR-01/PromiseKeeper"
+  selected_use_case: "B2B Order Fulfillment & Delivery-Promise Risk"
+  target_persona: "Operations & Supply Chain Managers"
+  frozen_commit: null
+  demo_tag: null
+team:
+  - "Aditya Jayaraman"
+owners:
+  coordinator: "Aditya Jayaraman"
+  product_scope: "Aditya Jayaraman"
+  hindsight_integration: "Aditya Jayaraman"
+  application: ["Aditya Jayaraman"]
+  evaluation_and_demo: "Aditya Jayaraman"
+  repository_and_readme: "Aditya Jayaraman"
+  presenter: "Aditya Jayaraman"
+  video: "Aditya Jayaraman"
+  submission: "Aditya Jayaraman"
