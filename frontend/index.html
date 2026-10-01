@@ -120,76 +120,21 @@
                     </div>
 
                     <div id="detailed-analysis" class="hidden space-y-6">
-                        <h4 class="text-gray-300 font-bold mb-1 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                            Detailed Analysis
-                        </h4>
-                        
-                        <!-- NEW FINDING CARD (Cyan Variant) -->
-                        <div class="bg-[#0f0714] border border-red-800/80 rounded-xl p-5 shadow-[0_0_15px_rgba(220,38,38,0.1)]">
-                            <div class="flex justify-between items-start mb-3">
-                                <div class="flex items-center gap-2 text-red-500">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                    <h4 class="text-lg font-bold text-gray-200 tracking-wide">Static SLA Constraint Vulnerability</h4>
-                                </div>
-                                <span class="bg-red-950/60 text-red-400 border border-red-800/80 px-2 py-0.5 rounded text-xs font-bold tracking-wider">CRITICAL</span>
-                            </div>
-                            
-                            <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                                The timeline query is constructed using a hardcoded SLA heuristic, directly interpolating the 'Gold Tier' status into the delivery promise. This method is highly susceptible to unmodeled logistical delays. If the regional node encounters constraints, a strict 3.0 day promise could lead to unauthorized SLA breaches and financial penalties.
-                            </p>
+                        <div id="reasons" class="space-y-3"></div>
+                        <div id="alternatives" class="space-y-3"></div>
+                    </div>
 
-                            <div class="bg-[#05111a] border border-[#0c4a6e] rounded-lg p-4 flex gap-5 items-center">
-                                <div class="flex flex-col items-center justify-center shrink-0 w-24">
-                                    <div class="flex items-center gap-1 text-[#22d3ee]">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-center leading-tight">NEW FINDING</span>
-                                    </div>
-                                    <span class="text-[#0284c7] text-[9px] font-bold mt-1 text-center">(Static Path Analysis)</span>
-                                </div>
-                                <p class="text-gray-300 text-sm leading-relaxed border-l border-[#0c4a6e] pl-4">
-                                    The graph engine has identified that relying solely on tier-based heuristics bypasses regional congestion modeling. It is recommended to invoke Hindsight evaluation overrides.
-                                </p>
-                            </div>
+                    <div id="path-panel" class="glass-panel rounded-xl p-6 hidden">
+                        <h4 class="text-gray-300 font-bold mb-3">Compiled path <span id="meta" class="text-xs font-normal text-gray-500"></span></h4>
+                        <div id="path-steps" class="space-y-2 text-sm font-mono"></div>
+                    </div>
 
-                            <div class="flex gap-4 mt-5">
-                                <button class="action-btn btn-accept flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Accept</button>
-                                <button class="action-btn btn-reject flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Reject</button>
-                                <button class="action-btn btn-fixed flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Mark Fixed</button>
-                            </div>
-                        </div>
-
-                        <!-- LEARNED CONTEXT CARD (Blue Variant) -->
-                        <div class="bg-[#0f0714] border border-orange-800/80 rounded-xl p-5 shadow-[0_0_15px_rgba(234,88,12,0.1)]">
-                            <div class="flex justify-between items-start mb-3">
-                                <div class="flex items-center gap-2 text-orange-500">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                    <h4 class="text-lg font-bold text-gray-200 tracking-wide">Historical Customs Deviation</h4>
-                                </div>
-                                <span class="bg-orange-950/60 text-orange-400 border border-orange-800/80 px-2 py-0.5 rounded text-xs font-bold tracking-wider">WARNING</span>
-                            </div>
-                            
-                            <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                                The Reality Compiler generated a base timeline of 3.0 days. However, Hindsight memory indicates that high-value EU orders require additional clearance. To guarantee SLA compliance, a dynamic buffer is required.
-                            </p>
-
-                            <div class="bg-[#0b141e] border border-[#1e3a5f] rounded-lg p-4 flex gap-5 items-center">
-                                <div class="flex flex-col items-center justify-center shrink-0 w-24">
-                                    <span class="text-[#38bdf8] text-[10px] font-extrabold uppercase tracking-widest text-center leading-tight">Learned Context</span>
-                                    <span class="text-[#0284c7] text-[9px] font-bold mt-1 text-center">(Hindsight Memory)</span>
-                                </div>
-                                <p class="text-gray-300 text-sm leading-relaxed border-l border-[#1e3a5f] pl-4">
-                                    Historical trace <code class="text-purple-400 bg-purple-900/30 px-1 rounded">TRC-8891-EU</code> indicates that orders > $5,000 to this destination experienced a +1.5 day deviation due to customs holds not accounted for in standard SLAs.
-                                </p>
-                            </div>
-
-                            <div class="flex gap-4 mt-5">
-                                <button class="action-btn btn-accept flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Accept Buffer</button>
-                                <button class="action-btn btn-reject flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Reject</button>
-                                <button class="action-btn btn-fixed flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Mark Resolved</button>
-                            </div>
-                        </div>
-
+                    <div id="observe-panel" class="glass-panel rounded-xl p-6 hidden">
+                        <h4 class="text-gray-300 font-bold mb-1">Record the real outcome</h4>
+                        <p class="text-xs text-gray-500 mb-4">Reconciles what actually happened against <span id="sim-id" class="font-mono text-purple-400"></span>, retains the trace and any corrections, and feeds the next prediction.</p>
+                        <div id="observe-inputs" class="grid grid-cols-3 gap-3"></div>
+                        <button id="observe-btn" class="mt-4 bg-neonpurple hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Reconcile &amp; retain</button>
+                        <div id="observe-result" class="mt-4 text-sm text-gray-300"></div>
                     </div>
                 </div>
             </div>
@@ -257,12 +202,25 @@
                 <h4 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Response (200 OK)</h4>
                 <div class="bg-black/60 border border-gray-800 rounded-lg p-4 font-mono text-sm text-green-300 overflow-x-auto">
 <pre>{
-  "decision": "review",
-  "total_value": 3.5,
+  "simulation_id": "sim-1cbe5ae406",
+  "decision": "block",
+  "reachable": true,
+  "total_value": 4.529,
+  "metric_unit": "business days",
+  "projected_date": "2026-10-05",
   "reasons": [
-    "Analyzed via compiled evidence bounds"
+    "Blocked by invariant GOLD_TIER_SLA: violated: total_days <= 3 (given total_days=4.529)"
   ],
-  "memories_used": 2
+  "alternatives": [
+    {
+      "intervention": "risk_pre_clearance",
+      "total_value": 2.9,
+      "lead_time_days": 0.5,
+      "decision": "allow"
+    }
+  ],
+  "memories_used": 7,
+  "path": "[ ...3 steps with value, confidence, derived_from... ]"
 }</pre>
                 </div>
             </div>
@@ -271,7 +229,7 @@
             <div class="glass-panel rounded-xl p-8 h-fit">
                 <div class="flex items-center gap-3 mb-6">
                     <span class="bg-blue-600/20 text-blue-400 border border-blue-600/50 px-3 py-1 rounded text-sm font-bold tracking-wider">GET</span>
-                    <code class="text-lg text-gray-200">/history</code>
+                    <code class="text-lg text-gray-200">/history?tenant=&amp;domain=&amp;account=</code>
                 </div>
                 <p class="text-gray-400 text-sm mb-6 leading-relaxed">Returns a historical audit trail of trace reconciliations, showing where predicted execution deviated from real-world outcomes and what coefficients were modified.</p>
                 
@@ -279,16 +237,18 @@
                 <div class="bg-black/60 border border-gray-800 rounded-lg p-4 font-mono text-sm text-green-300 overflow-x-auto">
 <pre>[
   {
-    "trace_id": "TRC-8891-EU",
-    "classification": "unmodeled",
-    "residual_delta": 2.0,
-    "unmodeled_states": [
-      "customs_hold"
-    ],
+    "trace_id": "ops-4411",
+    "account": "acct-gold-01",
+    "classification": "contradicted",
+    "predicted_total": 4.529,
+    "observed_total": 6.0,
+    "total_delta": 1.471,
     "proposed_corrections": [
       {
-        "kind": "new_transition",
-        "value": 2.0
+        "kind": "coefficient_update",
+        "from_state": "shipped",
+        "to_state": "delivered",
+        "value": 5.0
       }
     ]
   }
@@ -328,21 +288,98 @@
             if (tabName === 'history') loadHistory();
         }
 
+        const STAGES = ['payment_authorized', 'picked', 'shipped', 'delivered'];
+        const TENANT = 'pk-demo';
+        let lastSim = null, lastState = null, lastAccount = null;
+
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
         async function loadHistory() {
+            const tbody = document.getElementById('history-tbody');
+            const account = document.getElementById('account').value;
             try {
-                const response = await fetch('/history');
+                const response = await fetch(`/history?tenant=${TENANT}&domain=fulfillment&account=${encodeURIComponent(account)}`);
+                if (!response.ok) throw new Error(response.status);
                 const data = await response.json();
-                const tbody = document.getElementById('history-tbody');
-                tbody.innerHTML = '';
-                data.forEach(trace => {
-                    const badgeClass = trace.classification === 'confirmed' ? 'bg-[#064e3b]/80 text-[#34d399] border-[#047857]/50' :
-                                       trace.classification === 'deviated' ? 'bg-[#7f1d1d]/80 text-[#f87171] border-[#b91c1c]/50' :
-                                       'bg-[#78350f]/80 text-[#fbbf24] border-[#b45309]/50';
-                    const details = trace.unmodeled_states.length > 0 ? `Added state: <span class="text-gray-300">${trace.unmodeled_states[0]}</span>` : trace.proposed_corrections.length > 0 ? `Coefficient Mod: <span class="text-gray-300">${trace.proposed_corrections[0].value}</span>` : 'Matched Model';
-                    tbody.innerHTML += `<tr class="hover:bg-white/5 transition border-b border-gray-800 last:border-0"><td class="px-6 py-4 font-mono text-purple-400">${trace.trace_id}</td><td class="px-6 py-4 text-gray-200">${trace.account}</td><td class="px-6 py-4">${trace.predicted_total} days</td><td class="px-6 py-4">${trace.observed_total} days</td><td class="px-6 py-4 text-xs font-mono text-gray-400">${details}</td><td class="px-6 py-4"><span class="px-3 py-1 rounded text-[10px] font-extrabold tracking-wider border ${badgeClass}">${trace.classification.toUpperCase()}</span></td></tr>`;
-                });
-            } catch (err) { }
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-6 text-center text-gray-500">No reconciliations yet. Run a simulation, then record its real outcome.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.map(t => {
+                    const bad = ['contradicted', 'model_invalid'].includes(t.classification);
+                    const badge = t.classification === 'confirmed' ? 'bg-[#064e3b]/80 text-[#34d399] border-[#047857]/50'
+                                : bad ? 'bg-[#7f1d1d]/80 text-[#f87171] border-[#b91c1c]/50'
+                                : 'bg-[#78350f]/80 text-[#fbbf24] border-[#b45309]/50';
+                    const first = (t.proposed_corrections || [])[0];
+                    const details = (t.unmodeled_states || []).length ? `Added state: <span class="text-gray-300">${esc(t.unmodeled_states[0])}</span>`
+                                  : first ? `${esc(first.kind)}: <span class="text-gray-300">${esc(first.from_state)}→${esc(first.to_state)} = ${esc(first.value)}</span>`
+                                  : 'Matched model';
+                    return `<tr class="hover:bg-white/5 transition border-b border-gray-800 last:border-0"><td class="px-6 py-4 font-mono text-purple-400">${esc(t.trace_id)}</td><td class="px-6 py-4 text-gray-200">${esc(t.account)}</td><td class="px-6 py-4">${esc(t.predicted_total)} days</td><td class="px-6 py-4">${esc(t.observed_total)} days</td><td class="px-6 py-4 text-xs font-mono text-gray-400">${details}</td><td class="px-6 py-4"><span class="px-3 py-1 rounded text-[10px] font-extrabold tracking-wider border ${badge}">${esc(t.classification).toUpperCase()}</span></td></tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-6 text-center text-red-400">Could not load history.</td></tr>';
+            }
         }
+
+        function card(color, title, tag, body) {
+            return `<div class="bg-[#0f0714] border border-${color}-800/80 rounded-xl p-5"><div class="flex justify-between items-start mb-2"><h4 class="text-lg font-bold text-gray-200">${esc(title)}</h4><span class="text-${color}-400 text-xs font-bold tracking-wider">${esc(tag)}</span></div><p class="text-gray-300 text-sm leading-relaxed">${body}</p></div>`;
+        }
+
+        function render(data) {
+            const icon = document.getElementById('status-icon');
+            const text = document.getElementById('status-text');
+            const byDecision = {
+                allow: ['Promise Feasible', 'text-neongreen', 'green'],
+                review: ['Review Required', 'text-yellow-400', 'yellow'],
+                block: ['Blocked: SLA Breach Predicted', 'text-red-500', 'red'],
+                insufficient_evidence: ['Not Enough Evidence Yet', 'text-gray-300', 'gray'],
+            };
+            const [label, cls, color] = byDecision[data.decision] || [data.decision, 'text-gray-300', 'gray'];
+            icon.innerHTML = '';
+            text.innerText = label; text.className = cls;
+
+            document.getElementById('timeline').innerText = data.reachable
+                ? `${data.total_value} ${data.metric_unit}` + (data.projected_date ? ` (by ${data.projected_date}${data.buffer_applied ? ', buffered ' + data.projected_date_buffered : ''})` : '')
+                : 'n/a';
+
+            const panel = document.getElementById('detailed-analysis');
+            panel.classList.remove('hidden');
+            document.getElementById('reasons').innerHTML = (data.reasons || []).map(r => card(color, label, data.decision.toUpperCase(), esc(r))).join('')
+                + (data.degraded_recall ? card('orange', 'Degraded recall', 'WARNING', 'Hindsight was requested but unavailable or empty; using the local store.') : '');
+            document.getElementById('alternatives').innerHTML = (data.alternatives || []).map(a =>
+                card('green', `Alternative: ${a.intervention}`, a.decision.toUpperCase(), `Learned from retained successful interventions: ${esc(a.total_value)} ${esc(data.metric_unit)} including ${esc(a.lead_time_days)} lead time.`)).join('');
+
+            const steps = document.getElementById('path-steps');
+            document.getElementById('path-panel').classList.toggle('hidden', !data.path.length);
+            document.getElementById('meta').innerText = `· ${data.memories_used} memories used · confidence ${Number(data.model_confidence).toFixed(2)}`;
+            steps.innerHTML = data.path.map(p => `<div class="flex justify-between border-b border-gray-800 pb-1"><span>${esc(p.from_state)} → ${esc(p.to_state)}</span><span class="text-gray-400">${esc(p.value)} · conf ${Number(p.confidence).toFixed(2)} · ${p.derived_from.length} sample(s)</span></div>`).join('');
+
+            // outcome form: one input per modeled stage (or the default stages on a cold start)
+            const legs = data.path.length ? data.path.map(p => [p.from_state, p.to_state]) : STAGES.slice(1).map((s, i) => [STAGES[i], s]);
+            document.getElementById('observe-inputs').innerHTML = legs.map(([a, b], i) =>
+                `<label class="text-xs text-gray-400">${esc(a)} → ${esc(b)}<input data-from="${esc(a)}" data-to="${esc(b)}" type="number" step="0.1" min="0" value="${data.path[i] ? data.path[i].value : 1}" class="obs w-full mt-1 bg-black/50 border border-gray-700 rounded-lg p-2 text-sm text-gray-200"></label>`).join('');
+            document.getElementById('sim-id').innerText = data.simulation_id;
+            document.getElementById('observe-result').innerText = '';
+            document.getElementById('observe-panel').classList.remove('hidden');
+        }
+
+        document.getElementById('observe-btn').addEventListener('click', async () => {
+            const out = document.getElementById('observe-result');
+            const transitions = [...document.querySelectorAll('.obs')].map(i => ({ from: i.dataset.from, to: i.dataset.to, value: parseFloat(i.value) }));
+            const payload = {
+                domain: 'fulfillment',
+                scope: { tenant: TENANT, domain: 'fulfillment', account: lastAccount },
+                simulation_id: lastSim,
+                trace: { id: 'ui-' + Date.now(), scope: { tenant: TENANT, domain: 'fulfillment', account: lastAccount }, kind: 'observed_transition',
+                         occurred_at: new Date().toISOString().slice(0, 10), source: 'dashboard', state: lastState, transitions }
+            };
+            try {
+                const r = await fetch('/observe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const j = await r.json();
+                if (!r.ok) { out.innerText = 'Error: ' + (typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail)); return; }
+                out.innerText = `${j.classification.toUpperCase()}: predicted ${j.predicted_total}, observed ${j.observed_total} (Δ ${j.total_delta}); ${j.proposed_corrections.length} correction(s) retained. Re-run the simulation to see the updated prediction.`;
+            } catch (e) { out.innerText = 'Error connecting to backend.'; }
+        });
 
         document.getElementById('simForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -350,39 +387,27 @@
             document.getElementById('results').classList.add('hidden');
             document.getElementById('loading').classList.remove('hidden');
 
-            const payload = {
-                domain: "fulfillment",
-                scope: { tenant: "pk-demo", domain: "fulfillment", account: document.getElementById('account').value },
-                state: { order_value: parseInt(document.getElementById('orderValue').value), destination_region: document.getElementById('region').value, tier: document.getElementById('tier').value }
-            };
+            lastAccount = document.getElementById('account').value;
+            lastState = { order_value: parseInt(document.getElementById('orderValue').value), destination_region: document.getElementById('region').value,
+                          tier: document.getElementById('tier').value, placed_at: new Date().toISOString().slice(0, 10) };
+            const payload = { domain: 'fulfillment', scope: { tenant: TENANT, domain: 'fulfillment', account: lastAccount }, state: lastState };
 
             try {
                 const response = await fetch('/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const data = await response.json();
-                
                 document.getElementById('loading').classList.add('hidden');
-                document.getElementById('results').classList.remove('hidden');
-
-                const statusIcon = document.getElementById('status-icon');
-                const statusText = document.getElementById('status-text');
-                const detailedAnalysis = document.getElementById('detailed-analysis');
-
-                if (data.decision === "allow") {
-                    statusIcon.innerHTML = "<svg class='w-6 h-6 text-neongreen' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7'></path></svg>";
-                    statusText.innerText = "Promise Feasible";
-                    statusText.className = "text-neongreen";
-                    detailedAnalysis.classList.add('hidden');
-                } else {
-                    statusIcon.innerHTML = "<svg class='w-6 h-6 text-red-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'></path></svg>";
-                    statusText.innerText = "Review Required (SLA Breach Risk)";
-                    statusText.className = "text-red-500";
-                    detailedAnalysis.classList.remove('hidden');
+                if (!response.ok) {
+                    document.getElementById('idle').classList.remove('hidden');
+                    document.getElementById('idle').innerText = 'Error: ' + (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
+                    return;
                 }
-
-                document.getElementById('timeline').innerText = `${data.total_value} days`;
-
+                lastSim = data.simulation_id;
+                document.getElementById('results').classList.remove('hidden');
+                render(data);
             } catch (err) {
-                alert("Error connecting to backend.");
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('idle').classList.remove('hidden');
+                document.getElementById('idle').innerText = 'Error connecting to backend.';
             }
         });
     </script>

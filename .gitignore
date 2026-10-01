@@ -14,3 +14,4 @@ htmlcov/
 evidence/evaluations/*.json
 evidence/evaluations/*.md
 !evidence/evaluations/.gitkeep
+.pk_store_audit/
