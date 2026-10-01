@@ -15,6 +15,7 @@ metric:
 compilation:
   min_support: 1
   deviation_tolerance: 0.3
+  recency_half_life_days: 30
 guard_hypotheses:
   - id: always
     specificity: 0

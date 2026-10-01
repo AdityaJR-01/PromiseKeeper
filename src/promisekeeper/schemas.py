@@ -1,11 +1,16 @@
 from __future__ import annotations
+import re
 from datetime import date
 from typing import Any, Literal, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 SCHEMA_VERSION = "0.1"
 EvidenceKind = Literal["observed_transition", "successful_intervention", "failed_intervention", "fact", "preference", "commitment", "rule_correction"]
 Severity = Literal["blocking", "warning", "model_invalid", "info"]
+
+# Scope parts become file names (local store) and Hindsight bank ids, so they are
+# restricted to a conservative charset. This is what blocks "../../x" tenants.
+_SCOPE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 
 class Scope(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -13,12 +18,20 @@ class Scope(BaseModel):
     domain: str
     account: Optional[str] = None
     user: Optional[str] = None
+
+    @field_validator("tenant", "domain", "account", "user")
+    @classmethod
+    def _safe_name(cls, v):
+        if v is not None and not _SCOPE_NAME.match(v):
+            raise ValueError("must be 1-64 chars of letters, digits, '_' or '-', starting with a letter or digit")
+        return v
     def bank_key(self) -> str: return f"{self.tenant}-{self.domain}"
 
 class ObservedTransition(BaseModel):
     from_state: str = Field(alias="from")
     to_state: str = Field(alias="to")
-    value: float
+    # Durations are never negative; Dijkstra is only correct for non-negative weights.
+    value: float = Field(ge=0.0, allow_inf_nan=False)
     model_config = ConfigDict(populate_by_name=True)
 
 class Claim(BaseModel):
@@ -105,6 +118,7 @@ class SimulationResult(BaseModel):
     invariants: list[InvariantResult] = Field(default_factory=list)
     decision: Literal["allow", "review", "block", "insufficient_evidence"] = "allow"
     reasons: list[str] = Field(default_factory=list)
+    intervention: Optional[str] = None
     alternatives: list[dict[str, Any]] = Field(default_factory=list)
     evidence_used: list[str] = Field(default_factory=list)
     degraded_recall: bool = False

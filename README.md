@@ -9,9 +9,11 @@ Instead of statically assuming a Gold-tier account takes 3 days, PromiseKeeper r
 - **🧠 Hindsight Persistent Memory** — Retains project-level fulfillment traces, account preferences, and historical delays across orders.
 - **⚙️ Reality Compiler Engine** — A deterministic graph algorithm (Dijkstra) that calculates the lowest-cost fulfillment path based on dynamic, memory-adjusted coefficients.
 - **🔄 Reconcile & Retain Pipeline** — Compares predicted timelines against observed reality, automatically retaining `ProposedCorrections` to fix future estimates.
-- **🛡️ Strict Typed Hydration** — Bridges the gap between LLM semantic recall and deterministic execution by extracting UUIDs from Hindsight prose and hydrating them into strict Pydantic `EvidenceRecord` models.
+- **🛡️ Strict Typed Hydration** — Bridges the gap between LLM semantic recall and deterministic execution: every memory is retained with its `evidence_id` as Hindsight metadata, and recall hits are hydrated from the local canonical store into strict Pydantic `EvidenceRecord` models (no prose parsing).
 - **🚫 SLA Breach Prevention** — Automatically blocks or flags promises that violate invariant contract rules using memory-injected reality checks.
-- **⚖️ Calibrated Confidence Buffers** — Distinguishes between highly supported transitions and low-sample observations, applying conservative time buffers when model confidence is low.
+- **⚖️ Calibrated Confidence Buffers** — Confidence grows with sample count and shrinks with spread; a single observation (confidence 0.50) triggers a conservative buffer, three consistent ones (0.75) do not.
+- **🕒 Recency-Weighted Learning** — Observations are weighted by a 30-day half-life (`compilation.recency_half_life_days`), and `supersedes`/`superseded_by` evidence is excluded, so a policy change converges instead of being averaged away.
+- **🧯 Interventions** — Retained `successful_intervention` evidence (e.g. `risk_pre_clearance`) trains intervention-specific rules. A blocked or reviewed promise lists evidence-backed alternatives; an intervention with no evidence reports `insufficient_evidence` instead of pretending.
 - **📊 Next-Gen Glassmorphism UI** — Real-time TailwindCSS dashboard tracking simulation outcomes, trace history, and API documentation modules.
 - **🔌 Graceful Degradation** — Always functions via local scope-wide hydration if the Hindsight API is unreachable or offline.
 
@@ -42,12 +44,13 @@ Instead of statically assuming a Gold-tier account takes 3 days, PromiseKeeper r
     |          (Persistent Memory Bank Layer)         |
     +-----------------------+-------------------------+
                             |
-        2. Returns Prose Memories   | (Past delays, SLA breaches)
+        2. Returns Ranked Hits      | (metadata: evidence_id)
                             v
     +-------------------------------------------------+
     |            Typed Hydration Bridge               |
-    |      - Extracts UUIDs from semantic text        |
+    |      - Looks up evidence_id in the local store  |
     |      - Hydrates strict Pydantic EvidenceRecords |
+    |      - Tops up with newest local records        |
     +-----------------------+-------------------------+
                             |
         3. Verified Evidence Base   |
@@ -78,68 +81,94 @@ Instead of statically assuming a Gold-tier account takes 3 days, PromiseKeeper r
 
     make install
 
-### 2. Start Hindsight Server (Docker Required)
+### 2. (Optional) Start a Hindsight Server
 
-    docker run -d -p 8888:8888 ghcr.io/vectorize-io/hindsight:latest
+The default `PK_MEMORY_BACKEND=local` needs no server. To use Hindsight (Docker + an LLM key, which Hindsight uses for fact extraction):
+
+    docker run --rm -it -p 8888:8888 -p 9999:9999 \
+      -e HINDSIGHT_API_LLM_API_KEY=$OPENAI_API_KEY \
+      -v $HOME/.hindsight-docker:/home/hindsight/.pg0 \
+      ghcr.io/vectorize-io/hindsight:latest
+
+    export PK_MEMORY_BACKEND=hindsight   # or put it in .env (see .env.example)
+
+If Hindsight is down or returns nothing, PromiseKeeper falls back to the local store and reports `degraded_recall: true`.
 
 ### 3. Start the FastAPI Backend & Dashboard
 
-    uvicorn src.promisekeeper.api:app --reload --port 8000
+    make seed                                    # load deterministic demo evidence (idempotent)
+    uvicorn promisekeeper.api:app --reload --port 8000
 
-Open `http://localhost:8000` in your browser to view the interactive dashboard.
+Open `http://localhost:8000` in your browser to view the interactive dashboard. Without `make seed` (or real `/observe` traffic) the engine honestly answers `insufficient_evidence`.
+
+### 4. CLI, demo and audit
+
+    pk seed                                   # or: python -m promisekeeper.cli seed
+    pk demo                                   # gold EU order -> BLOCK + evidence-backed alternative
+    pk reset --domain fulfillment --yes       # clears ONE account (add --all-accounts for the whole bank)
+    make test                                 # pytest on the local backend, no network
+    make audit                                # tests + seeded end-to-end demo + prohibited-word / .env checks
 
 ## 📡 API Reference
 
+All scope fields (`tenant`, `domain`, `account`) must be 1–64 characters of letters, digits, `_` or `-`. `account` is a required scope key for the `fulfillment` domain. Errors: `404` unknown domain / simulation id, `422` invalid scope, state, intervention or trace.
+
 ### `POST /simulate`
 
-Evaluates an order's fulfillment risk by querying Hindsight for semantic context, hydrating the context into strict Pydantic rules, and calculating paths via Dijkstra.
+Recalls memory for the scope, compiles transition rules from the evidence (guards, recency weights, confidence), finds the cheapest path with Dijkstra, checks invariants, and returns a decision. The result is stored so it can later be reconciled. The `state` must contain every field the domain's guards and invariants read (`tier`, `destination_region` for `fulfillment`); a request that omits one is rejected rather than silently skipping the SLA check.
 
 **Request:**
 
     {
       "domain": "fulfillment",
-      "scope": {
-        "tenant": "pk-demo",
-        "domain": "fulfillment",
-        "account": "acct-gold-01"
-      },
-      "state": {
-        "order_value": 6000,
-        "destination_region": "EU",
-        "tier": "gold"
-      }
+      "scope": {"tenant": "pk-demo", "domain": "fulfillment", "account": "acct-gold-01"},
+      "state": {"order_value": 6000, "destination_region": "EU", "tier": "gold", "placed_at": "2026-09-28"},
+      "intervention": null
     }
 
-**Response:**
+**Response (seeded demo):**
 
     {
-      "decision": "review",
-      "total_value": 3.5,
-      "reasons": [
-        "Analyzed via compiled evidence bounds"
-      ],
-      "memories_used": 2
+      "simulation_id": "sim-1cbe5ae406",
+      "decision": "block",
+      "reachable": true,
+      "total_value": 4.529,
+      "metric_unit": "business days",
+      "projected_date": "2026-10-05",
+      "reasons": ["Blocked by invariant GOLD_TIER_SLA: violated: total_days <= 3 (given total_days=4.529)"],
+      "alternatives": [{"intervention": "risk_pre_clearance", "total_value": 2.9, "lead_time_days": 0.5, "decision": "allow"}],
+      "memories_used": 7,
+      ...
     }
 
-### `GET /history`
+`decision` is one of `allow`, `review` (low confidence -> buffer applied, or a warning invariant failed), `block` (a blocking invariant fails) or `insufficient_evidence` (no evidence-backed path yet).
 
-Returns a historical audit trail of trace reconciliations, showing where predicted execution deviated from real-world outcomes and what coefficients were modified.
+### `POST /observe`
 
-**Response:**
+Records what actually happened. Reconciles the trace against the simulation named by `simulation_id` (the promise that was made), retains the trace and any proposed corrections, and appends to the scope's history. `trace.scope` must equal `scope`. Idempotent by `trace.id`: replaying a trace returns the stored reconciliation and retains nothing twice.
 
-    [
-      {
-        "trace_id": "TRC-8891-EU",
-        "classification": "unmodeled",
-        "residual_delta": 2.0,
-        "unmodeled_states": [
-          "customs_hold"
-        ],
-        "proposed_corrections": [
-          {
-            "kind": "new_transition",
-            "value": 2.0
-          }
-        ]
-      }
-    ]
+    {
+      "domain": "fulfillment",
+      "scope": {"tenant": "pk-demo", "domain": "fulfillment", "account": "acct-gold-01"},
+      "simulation_id": "sim-1cbe5ae406",
+      "trace": {"id": "ops-4411", "scope": {"tenant": "pk-demo", "domain": "fulfillment", "account": "acct-gold-01"},
+                "kind": "observed_transition", "occurred_at": "2026-10-02", "source": "ops-system",
+                "state": {"order_value": 6000, "destination_region": "EU", "tier": "gold"},
+                "transitions": [{"from": "shipped", "to": "delivered", "value": 5.0}]}
+    }
+
+### `GET /history?tenant=&domain=&account=`
+
+Reconciliation history for one scope (empty until `/observe` has been called; nothing is fabricated).
+
+### `GET /health`
+
+`{"memory_backend": "local" | "hindsight", "hindsight_reachable": null | true | false}`
+
+## ⚠️ Known limitations
+
+- Dijkstra returns the *fastest* observed route, which is optimistic when several routes exist. Confidence and the conservative buffer partly compensate; a percentile-based estimate is future work.
+- A predicted stage that never happens (`missing`) marks the model invalid but proposes no correction.
+- `scope.relevance_keys` in the domain YAML is not consumed yet.
+- Business-day projection skips weekends only (no holiday calendar).
+- Not yet exercised against a live Hindsight server in CI; the Hindsight path is covered by tests with a fake client.

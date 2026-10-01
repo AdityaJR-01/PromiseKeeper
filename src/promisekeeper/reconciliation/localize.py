@@ -3,7 +3,7 @@ import uuid
 from typing import Any
 from ..schemas import EvidenceRecord, InvariantResult, ProposedCorrection, ReconciliationResult, SimulationResult, StepDifference
 
-def reconcile(domain, sim: SimulationResult, trace: EvidenceRecord) -> ReconciliationResult:
+def reconcile(domain, sim: SimulationResult, trace: EvidenceRecord, invariant_results: list[InvariantResult] | None = None) -> ReconciliationResult:
     if trace.kind not in ("observed_transition", "successful_intervention"):
         return ReconciliationResult(
             reconciliation_id=f"rec-{uuid.uuid4().hex[:10]}",
@@ -40,12 +40,25 @@ def reconcile(domain, sim: SimulationResult, trace: EvidenceRecord) -> Reconcili
             delta = o_val - p_val
             classification = "confirmed" if abs(delta) <= domain.deviation_tolerance else "deviated"
             differences.append(StepDifference(from_state=u, to_state=v, classification=classification, predicted=p_val, observed=o_val, delta=delta, rule_id=p_step.rule_id))
+            if classification == "deviated":
+                proposed_corrections.append(ProposedCorrection(
+                    kind="coefficient_update", from_state=u, to_state=v, value=o_val,
+                    confidence=min(0.9, p_step.confidence + 0.1),
+                    rationale=f"Observed {o_val} vs. predicted {p_val} on {u}->{v} (delta {delta:+.2f}, tolerance {domain.deviation_tolerance}).",
+                    evidence_refs=[trace.id],
+                ))
         elif p_step and not o_trans:
             differences.append(StepDifference(from_state=u, to_state=v, classification="missing", predicted=p_step.value, observed=None, delta=-p_step.value, rule_id=p_step.rule_id))
         elif o_trans and not p_step:
             unmodeled_states.add(u)
             unmodeled_states.add(v)
             differences.append(StepDifference(from_state=u, to_state=v, classification="unmodeled", predicted=None, observed=o_trans.value, delta=o_trans.value, rule_id=None))
+            proposed_corrections.append(ProposedCorrection(
+                kind="new_transition", from_state=u, to_state=v, value=o_trans.value,
+                confidence=0.5,
+                rationale=f"Observed a transition {u}->{v} ({o_trans.value}) with no corresponding compiled rule -- propose adding it.",
+                evidence_refs=[trace.id],
+            ))
 
     if any(d.classification in ("unmodeled", "missing") for d in differences):
         overall_class = "model_invalid"
@@ -56,6 +69,9 @@ def reconcile(domain, sim: SimulationResult, trace: EvidenceRecord) -> Reconcili
     else:
         overall_class = "partially_confirmed"
 
+    structural_delta = round(sum(d.delta for d in differences if d.classification in ("unmodeled", "missing") and d.delta is not None), 6)
+    residual_delta = round(total_delta - structural_delta, 6)
+
     return ReconciliationResult(
         reconciliation_id=f"rec-{uuid.uuid4().hex[:10]}",
         simulation_id=sim.simulation_id,
@@ -64,10 +80,10 @@ def reconcile(domain, sim: SimulationResult, trace: EvidenceRecord) -> Reconcili
         predicted_total=round(predicted_total, 6),
         observed_total=round(observed_total, 6),
         total_delta=round(total_delta, 6),
-        structural_delta=0.0,
-        residual_delta=round(total_delta, 6),
+        structural_delta=structural_delta,
+        residual_delta=residual_delta,
         differences=differences,
         unmodeled_states=sorted(list(unmodeled_states)),
-        invariant_results=[],
+        invariant_results=invariant_results or [],
         proposed_corrections=proposed_corrections,
     )

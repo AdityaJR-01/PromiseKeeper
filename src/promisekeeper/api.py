@@ -1,81 +1,95 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-from typing import Any, Optional, List
-import os
-import uuid
+from pydantic import BaseModel, ValidationError
+from typing import Any, Optional
+from pathlib import Path
 
+from .errors import InvalidScope, PromiseKeeperError, UnknownDomain, UnknownSimulation
+from .memory import MemoryBackend
+from .memory import store as local_store
+from .schemas import EvidenceRecord, Scope
 from .service import PromiseKeeperService
-from .schemas import Scope, ReconciliationResult, StepDifference, ProposedCorrection
 
 app = FastAPI(title="PromiseKeeper Execution API")
 
-frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "frontend")
-app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+ROOT_DIR = Path(__file__).resolve().parents[2]
+frontend_dir = ROOT_DIR / "frontend"
+app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="static")
+
+
+# Domain errors become real HTTP statuses instead of 500s.
+@app.exception_handler(UnknownDomain)
+@app.exception_handler(UnknownSimulation)
+async def _not_found(_, exc):
+    return JSONResponse(status_code=404, content={"detail": str(exc)})
+
+@app.exception_handler(PromiseKeeperError)
+async def _unprocessable(_, exc):
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
+
 
 class SimulationRequest(BaseModel):
     domain: str
-    scope: dict[str, str]
+    scope: Scope               # validated: charset-restricted tenant/domain/account
     state: dict[str, Any]
     intervention: Optional[str] = None
 
+class ObserveRequest(BaseModel):
+    domain: str
+    scope: Scope
+    simulation_id: str         # must be an id returned by /simulate for this scope
+    trace: EvidenceRecord      # trace.scope must equal `scope`
+
+
 @app.get("/")
 def serve_dashboard():
-    return FileResponse(os.path.join(frontend_dir, "index.html"))
+    return FileResponse(frontend_dir / "index.html")
+
+@app.get("/health")
+def health():
+    mem = MemoryBackend()
+    return {"memory_backend": mem.mode, "hindsight_reachable": mem.ping()}
 
 @app.post("/simulate")
 def run_simulation(req: SimulationRequest):
-    try:
-        svc = PromiseKeeperService(req.domain)
-        scope = Scope(**req.scope)
-        sim, recall = svc.simulate_workflow(scope, req.state, req.intervention)
-        return {
-            "decision": sim.decision,
-            "total_value": sim.total_value,
-            "projected_date": sim.projected_date,
-            "reasons": sim.reasons,
-            "memories_used": getattr(recall, 'records', [])
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    svc = PromiseKeeperService(req.domain)
+    sim, recall = svc.simulate_workflow(req.scope, req.state, req.intervention)
+    return {
+        "simulation_id": sim.simulation_id,
+        "decision": sim.decision,
+        "reachable": sim.reachable,
+        "total_value": sim.total_value,
+        "metric_unit": sim.metric_unit,
+        "projected_date": sim.projected_date,
+        "projected_date_buffered": sim.projected_date_buffered,
+        "model_confidence": sim.model_confidence,
+        "buffer_applied": sim.buffer_applied,
+        "intervention": sim.intervention,
+        "reasons": sim.reasons,
+        "invariants": [i.model_dump() for i in sim.invariants],
+        "alternatives": sim.alternatives,
+        "memories_used": len(recall.records),   # a count, matching what the dashboard shows
+        "degraded_recall": recall.degraded,
+        "path": [p.model_dump() for p in sim.path],
+    }
+
+@app.post("/observe")
+def observe_outcome(req: ObserveRequest):
+    """Reconcile a real outcome against the simulation identified by
+    `simulation_id` (the promise actually made), retain the trace and proposed
+    corrections, and log the reconciliation. Idempotent by trace.id."""
+    if req.scope.domain != req.domain:
+        raise InvalidScope("scope.domain must equal domain")
+    svc = PromiseKeeperService(req.domain)
+    sim = local_store.load_simulation(req.scope, req.simulation_id)
+    return svc.record_outcome(req.scope, sim, req.trace).model_dump(mode="json")
 
 @app.get("/history")
-def get_reconciliation_history():
-    """Returns domain-accurate trace reconciliations representing the Reality Compiler's learning loop."""
-    return [
-        {
-            "trace_id": "TRC-8891-EU",
-            "account": "acct-gold-01 (EU)",
-            "classification": "unmodeled",
-            "predicted_total": 3.0,
-            "observed_total": 5.0,
-            "residual_delta": 2.0,
-            "unmodeled_states": ["customs_hold"],
-            "proposed_corrections": [
-                {"kind": "new_transition", "from_state": "shipped", "to_state": "customs_hold", "value": 2.0}
-            ]
-        },
-        {
-            "trace_id": "TRC-8892-US",
-            "account": "acct-silver-02 (US)",
-            "classification": "deviated",
-            "predicted_total": 4.0,
-            "observed_total": 4.5,
-            "residual_delta": 0.5,
-            "unmodeled_states": [],
-            "proposed_corrections": [
-                {"kind": "coefficient_update", "from_state": "picked", "to_state": "packed", "value": 0.5}
-            ]
-        },
-        {
-            "trace_id": "TRC-8893-AP",
-            "account": "acct-bronze-03 (APAC)",
-            "classification": "confirmed",
-            "predicted_total": 6.0,
-            "observed_total": 6.0,
-            "residual_delta": 0.0,
-            "unmodeled_states": [],
-            "proposed_corrections": []
-        }
-    ]
+def get_reconciliation_history(tenant: str = Query(...), domain: str = Query(...), account: str = Query(...)):
+    """Reconciliation history for ONE scope. Empty until /observe has been called."""
+    try:
+        scope = Scope(tenant=tenant, domain=domain, account=account)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=f"invalid scope: {e.errors()}")
+    return local_store.list_reconciliations(scope)

@@ -1,6 +1,8 @@
 # Memory Design
-* **Entities and Authorized Scopes**: Memories are isolated by `tenant` and `domain`. `account` acts as the relevance key.
-* **Retained Event Types**: `observed_transition`, `successful_intervention`, `failed_intervention`, `fact`, `preference`, `rule_correction`.
-* **Recall / Retention Triggers**: Hindsight semantic recall is triggered upon estimating a new order's timeline. Validated evidence is retained to the local store and Hindsight backend.
-* **Correction and Conflicting-Fact Policy**: Explicit `superseded_by` rules take absolute precedence. Otherwise, the most recent confirmed claim wins.
-* **Dependency-Outage Behavior**: If the Hindsight API is unavailable, the system falls back to scope-wide local typed hydration (`degraded=true`).
+* **Entities and Authorized Scopes**: Memories are isolated by `tenant` and `domain` (one Hindsight bank / local file per pair). `account` is a **hard key** for the fulfillment domain: every read, write and reset is filtered by it, records can only be retained under their own scope, and `/history` is per-scope.
+* **Retained Event Types**: `observed_transition`, `successful_intervention`, `failed_intervention`, `fact`, `preference`, `rule_correction`. Records carrying an `intervention` train only that intervention's rules.
+* **Recall / Retention Triggers**: Recall runs when a timeline is simulated (query rendered from scope + state). Evidence is retained on `/observe` (the trace plus any proposed corrections). Retention writes the local canonical store first (idempotent by evidence id), then Hindsight (async, `document_id` = evidence id).
+* **Recall Semantics**: Hindsight hits (tag-filtered with `all_strict` on domain + account) are hydrated by `evidence_id` from the local store and ranked first; the result is topped up with the newest local records so a semantic miss cannot delete an edge from the path (`PK_RECALL_TOPUP=false` for pure semantic selection). Local selection is newest-first.
+* **Correction and Conflicting-Fact Policy**: Records named by `supersedes` / `superseded_by` are excluded. Otherwise samples are recency-weighted (half-life `compilation.recency_half_life_days`, default 30 days), so the most recent evidence dominates. A `rule_correction` is not counted when the trace it refers to is also present (no double-weighting).
+* **Confidence**: `(1 - 1/(n+1)) / (1 + coefficient_of_variation)`, capped at 0.95. Below `preferences.confidence_buffer_threshold` a conservative buffer is added before invariants are checked.
+* **Dependency-Outage Behavior**: If Hindsight is unreachable, errors, or returns no usable hits while local data exists, the system falls back to the local store and sets `degraded=true`.

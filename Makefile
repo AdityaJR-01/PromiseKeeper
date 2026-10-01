@@ -1,4 +1,4 @@
-.PHONY: install ui api test audit
+.PHONY: install ui api test seed demo audit
 install:
 	python -m pip install -U pip
 	python -m pip install -e ".[all]"
@@ -8,9 +8,9 @@ ui:
 	streamlit run src/promisekeeper/ui.py
 test:
 	PK_MEMORY_BACKEND=local pytest -q
+seed:
+	python -m promisekeeper.cli seed
+demo:
+	python -m promisekeeper.cli demo
 audit:
-	@echo "--- prohibited word ---"
-	@! grep -rniE 'hack-?a-?thon' README.md docs/ content/ 2>/dev/null || (echo FAIL; exit 1)
-	@echo "--- tracked .env ---"
-	@! git ls-files | grep -E '(^|/)\.env$$' || (echo FAIL; exit 1)
-	@echo "AUDIT OK"
+	./audit_submission.sh
